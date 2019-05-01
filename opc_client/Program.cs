@@ -1,21 +1,46 @@
-﻿using System;
-using System.Linq;
+﻿// OSHMI OPC UA / DA DRIVER
+// Copyright 2019 Ricardo Lastra Olsen
+
+using System;
 using System.Threading;
-using Hylasoft.Opc.Common;
 using Hylasoft.Opc.Ua;
-using System.Configuration;
-using Opc.Ua.Client;
-using Opc.Ua;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Text;
 using Hylasoft.Opc.Da;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Web.Script.Serialization;
 
 namespace OSHMI_OPC_Client
 {
     class Program
     {
+        static public string Version = "OSHMI OPC UA/DA Driver Version 0.1";
+        static public int UDPPortSend = 9100;
+        static public int UDPPortListen = 9101;
+        static public bool logevent = false;
+        static public bool logread = false;
+        static public bool logcommand = true;
+
+        static public ConcurrentQueue<OSHMI_control> ControlQueue = new ConcurrentQueue<OSHMI_control>();
+
+        public const int bufSize = 8 * 1024;
+
+        public class State
+        {
+            public byte[] buffer = new byte[bufSize];
+        }
+
+        public struct OSHMI_control
+        {
+            public string oshmi_tag;
+            public double value;
+            public long timestamp;
+            public int countdown;
+            public List<string> uris_checked;
+        }
+
         public struct OPC_entry
         {
             public string opc_path;
@@ -26,7 +51,7 @@ namespace OSHMI_OPC_Client
         static void SendUdp(byte[] data)
         {
             using (UdpClient c = new UdpClient())
-                c.Send(data, data.Length, "127.0.0.1", 9100);
+                c.Send(data, data.Length, "127.0.0.1", UDPPortSend);
         }
 
         static void ProcessUa(String URI, OPC_entry[] entries, int readperiod)
@@ -71,7 +96,7 @@ namespace OSHMI_OPC_Client
                                         {
                                             bool bval = readEvent.Value;
                                             string sval = bval.ToString().ToLower();
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
                                         });
                                     }
@@ -82,7 +107,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Single>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -92,7 +117,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Double>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -103,7 +128,7 @@ namespace OSHMI_OPC_Client
                                         {
                                             Decimal dval = readEvent.Value;
                                             string sval = dval.ToString().ToLower();
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
                                         });
                                     }
@@ -113,7 +138,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Byte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -123,7 +148,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<SByte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -133,7 +158,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -143,7 +168,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -154,7 +179,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -164,7 +189,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -174,7 +199,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int64>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -184,7 +209,7 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt64>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
                                         });
                                     }
@@ -198,7 +223,7 @@ namespace OSHMI_OPC_Client
                                         {
                                             DateTime dt = readEvent.Value;
                                             string sval = dt.Ticks.ToString();
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
                                         });
                                     }
@@ -352,7 +377,7 @@ namespace OSHMI_OPC_Client
                                         }
                                         break;
                                     default:
-                                        Console.WriteLine("READ UNSUPPORTED TYPE: " + URI + " " + entry.opc_path + " " + stype);
+                                        if (logread) Console.WriteLine("READ UNSUPPORTED TYPE: " + URI + " " + entry.opc_path + " " + stype);
                                         fail = true;
                                         break;
                                 }
@@ -360,11 +385,57 @@ namespace OSHMI_OPC_Client
                                 if (!fail)
                                 {
                                     SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
-                                    Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag + " " + sval);
+                                    if (logread) Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                 }
                             }
 
-                            System.Threading.Thread.Sleep(readperiod * 1000);
+                            for (int i = 0; i < readperiod; i++) {
+                                // check for controls
+                                OSHMI_control oc;
+                                bool found = false;
+                                if (ControlQueue.TryDequeue(out oc))
+                                {
+                                    DateTime dt = DateTime.Now;
+
+                                    if (dt.Ticks / 10000000 < oc.timestamp / 10000000 + 10 ) // past ten seconds expires the command (discards it)
+                                    {
+                                        if (!oc.uris_checked.Contains(URI))
+                                        {
+                                            foreach (OPC_entry entry in entries)
+                                            {
+                                                if (entry.oshmi_tag == oc.oshmi_tag)
+                                                {
+                                                    found = true;
+                                                    if (logcommand) Console.Write("COMMAND " + URI + " " + entry.opc_path + " " + entry.oshmi_tag + " " + oc.value);
+                                                    break;
+                                                }
+                                            }
+                                            if (!found)
+                                            {
+                                                oc.countdown--;
+                                                if (oc.countdown > 0)
+                                                {
+                                                    oc.uris_checked.Add(URI); // mark as checked
+                                                    ControlQueue.Enqueue(oc); // return command object to the queue if not the last to check
+                                                }
+                                                else
+                                                   if (logcommand) Console.Write("DISCARDED COMMAND (NOT FOUND) ON " + oc.oshmi_tag + " " + oc.value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ControlQueue.Enqueue(oc); // return command object to the queue if not the last to check
+                                        }
+                                    }
+                                    else
+                                      if (logcommand) Console.Write("DISCARDED COMMAND (TIMEOUT) ON " + oc.oshmi_tag + " " + oc.value);
+                                }
+                                // wait a second
+                                System.Threading.Thread.Sleep(1000);
+                                if (found) // command sent, go on update readings
+                                    break;
+                            }
+
                         } while (true);
                     }
                 }
@@ -415,7 +486,7 @@ namespace OSHMI_OPC_Client
                                             bool bval = readEvent.Value;
                                             string sval = bval.ToString().ToLower();
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval );
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval );
                                         });
                                     }
                                     break;
@@ -425,7 +496,7 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<Single>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
                                     break;
@@ -436,7 +507,7 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<double>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
                                     break;
@@ -447,7 +518,7 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<Byte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
                                     break;
@@ -458,7 +529,7 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<Int16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
                                     break;
@@ -471,7 +542,7 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<Int32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
                                     break;
@@ -485,7 +556,7 @@ namespace OSHMI_OPC_Client
                                             DateTime dt = readEvent.Value;
                                             string sval = dt.Ticks.ToString();
                                             SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
-                                            Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
+                                            if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                         });
                                     }
                                     break;
@@ -589,7 +660,7 @@ namespace OSHMI_OPC_Client
                                         }
                                         break;
                                     default:
-                                        Console.WriteLine("READ UNSUPPORTED TYPE: " + URI + " " + entry.opc_path + " " + stype);
+                                        if (logread) Console.WriteLine("READ UNSUPPORTED TYPE: " + URI + " " + entry.opc_path + " " + stype);
                                         fail = true;
                                         break;
                                 }
@@ -597,11 +668,58 @@ namespace OSHMI_OPC_Client
                                 if (!fail)
                                 {
                                     SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
-                                    Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag  + " " + sval);
+                                    if (logread) Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag  + " " + sval);
                                 }
                             }
 
-                            System.Threading.Thread.Sleep(readperiod * 1000);
+                            for (int i = 0; i < readperiod; i++)
+                            {
+                                // check for controls
+                                OSHMI_control oc;
+                                bool found = false;
+                                if (ControlQueue.TryDequeue(out oc))
+                                {
+                                    DateTime dt = DateTime.Now;
+
+                                    if (dt.Ticks / 10000000 < oc.timestamp / 10000000 + 10) // past ten seconds expires the command (discards it)
+                                    {
+                                        if (!oc.uris_checked.Contains(URI))
+                                        {
+                                            foreach (OPC_entry entry in entries)
+                                            {
+                                                if (entry.oshmi_tag == oc.oshmi_tag)
+                                                {
+                                                    found = true;
+                                                    if (logcommand) Console.Write("COMMAND " + URI + " " + entry.opc_path + " " + entry.oshmi_tag + " " + oc.value);
+                                                    break;
+                                                }
+                                            }
+                                            if (!found)
+                                            {
+                                                oc.countdown--;
+                                                if (oc.countdown > 0)
+                                                {
+                                                    oc.uris_checked.Add(URI); // mark as checked
+                                                    ControlQueue.Enqueue(oc); // return command object to the queue if not the last to check
+                                                }
+                                                else
+                                                   if (logcommand) Console.Write("DISCARDED COMMAND (NOT FOUND) ON " + oc.oshmi_tag + " " + oc.value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ControlQueue.Enqueue(oc); // return command object to the queue if not the last to check
+                                        }
+                                    }
+                                    else
+                                      if (logcommand) Console.Write("DISCARDED COMMAND (TIMEOUT) ON " + oc.oshmi_tag + " " + oc.value);
+                                }
+                                // wait a second
+                                System.Threading.Thread.Sleep(1000);
+                                if (found) // command sent, go on update readings
+                                    break;
+                            }
+
                         } while (true);
                     }
                 }
@@ -617,14 +735,18 @@ namespace OSHMI_OPC_Client
 
         static void Main(string[] args)
         {
+            Console.WriteLine(Version);
+
+            int number_of_servers = 3;
+
             OPC_entry[] entriesUA1 =
             new OPC_entry[]{
-                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Double", oshmi_tag = "", opc_type = "" },
-                //new OPC_entry() { opc_path = "ns=2;s=Demo.BoilerDemo.Boiler1.FillLevelSensor.FillLevel", oshmi_tag = "", opc_type = "" },
-                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Boolean", oshmi_tag = "", opc_type = "" },
-                new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Byte", oshmi_tag = "", opc_type = "" },
-                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.SByte", oshmi_tag = "", opc_type = "" },
-                new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Int16", oshmi_tag = "", opc_type = "" }
+                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Double", oshmi_tag = "Demo.Dynamic.Scalar.Double", opc_type = "" },
+                //new OPC_entry() { opc_path = "ns=2;s=Demo.BoilerDemo.Boiler1.FillLevelSensor.FillLevel", oshmi_tag = "Demo.BoilerDemo.Boiler1.FillLevelSensor.FillLevel", opc_type = "" },
+                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Boolean", oshmi_tag = "Demo.Dynamic.Scalar.Boolean", opc_type = "" },
+                new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Byte", oshmi_tag = "Demo.Dynamic.Scalar.Byte", opc_type = "" },
+                //new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.SByte", oshmi_tag = "Demo.Dynamic.Scalar.SByte", opc_type = "" },
+                new OPC_entry() { opc_path = "ns=2;s=Demo.Dynamic.Scalar.Int16", oshmi_tag = "Demo.Dynamic.Scalar.Int16", opc_type = "" }
             };
             String URIUa1 = "opc.tcp://opcuaserver.com:48010";
             Thread tUa = new Thread(() => ProcessUa(URIUa1, entriesUA1, 15));
@@ -648,7 +770,7 @@ namespace OSHMI_OPC_Client
                 new OPC_entry() { opc_path = "ns=3;s=DateTimeDataItem", oshmi_tag = "DateTimeDataItem", opc_type = "" },
                 new OPC_entry() { opc_path = "ns=5;s=Counter1", oshmi_tag = "Counter1", opc_type = "" }
             };
-            String URIUa2 = "opc.tcp://LAPTOP-GSJBD1FP:53530/OPCUA/SimulationServer";
+            String URIUa2 = "opc.tcp://test:test@LAPTOP-GSJBD1FP:53530/OPCUA/SimulationServer";
             Thread tUa2 = new Thread(() => ProcessUa(URIUa2, entriesUA2, 15));
             tUa2.Start();
 
@@ -664,7 +786,58 @@ namespace OSHMI_OPC_Client
             String URIda = "opcda://localhost/Prosys.OPC.Simulation";
             Thread tDa = new Thread(() => ProcessDa(URIda, entriesDA, 5));
             tDa.Start();
+            
+            UdpClient listener = new UdpClient(UDPPortListen);
+            IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, UDPPortListen);
+
+            try
+            {
+                while (true)
+                {
+                    // Waiting for messages
+                    byte[] bytes = listener.Receive(ref groupEP);
+
+                    Console.WriteLine($"Received message from {groupEP} : ");
+                    string s = Encoding.UTF8.GetString(bytes, 0, bytes.Length-1).Trim(); // bytes.Length-1 is to remove the final \0
+                    Console.WriteLine(s);
+
+                    try
+                    {
+                        string tag = "";
+                        double dval = 0;
+                        JavaScriptSerializer serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+                        dynamic result = serializer.DeserializeObject(s);
+                        foreach (KeyValuePair<string, object> entry in result)
+                        {
+                            var key = entry.Key;
+                            var value = entry.Value;
+                            Console.WriteLine(String.Format("{0} : {1}", key, value));
+                            if (key  == "tag")
+                              tag = value.ToString();
+                            if (key == "value")
+                              dval = Double.Parse(value.ToString());
+                        }
+                        DateTime currentDate = DateTime.Now;
+                        OSHMI_control oc = new OSHMI_control() { oshmi_tag = tag, value = dval, timestamp = currentDate.Ticks, countdown = number_of_servers, uris_checked = new List<string>() };
+                        ControlQueue.Enqueue(oc);
+                    }
+                    catch (Exception) {
+                        Console.WriteLine("ERROR: Invalid JSON Message!");
+                    }
+                }
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                listener.Close();
+            }
+
+            // Console.ReadKey();
 
         }
+        
     }
 }
