@@ -271,8 +271,14 @@ namespace OSHMI_OPC_Client
                                         {
                                             bool bval = readEvent.Value;
                                             string sval = bval.ToString().ToLower();
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + sval +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                ",\"timestamp\": " + (Int32)(readEvent.SourceTimestamp.Subtract(new DateTime(1970, 1, 1))).TotalSeconds +
+                                                ",\"ms\":" + readEvent.SourceTimestamp.Millisecond + 
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
                                         });
                                     }
                                     break;
@@ -282,7 +288,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Single>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")));
                                         });
                                     }
@@ -291,8 +301,12 @@ namespace OSHMI_OPC_Client
                                 case "system.double":
                                     {
                                         client.Monitor<Double>(entry.opc_path, (readEvent, unsubscribe) =>
-                                        {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) + "}"));
+                                        {                                           
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag + 
+                                                "\",\"value\":" + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) + 
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false" ) +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")));
                                         });
                                     }
@@ -302,8 +316,12 @@ namespace OSHMI_OPC_Client
                                         client.Monitor<Decimal>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
                                             Decimal dval = readEvent.Value;
-                                            string sval = dval.ToString().ToLower();
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                            string sval = dval.ToString("G", CultureInfo.CreateSpecificCulture("en-US"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + sval +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                         });
                                     }
@@ -313,7 +331,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Byte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -323,7 +345,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<SByte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -333,7 +359,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -343,7 +373,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -354,7 +388,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -364,7 +402,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -374,7 +416,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int64>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -384,7 +430,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<UInt64>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -398,7 +448,11 @@ namespace OSHMI_OPC_Client
                                         {
                                             DateTime dt = readEvent.Value;
                                             string sval = dt.Ticks.ToString();
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + sval +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                         });
                                     }
@@ -426,6 +480,7 @@ namespace OSHMI_OPC_Client
                                 double val = 0;
                                 string sval = "";
                                 bool fail = false;
+                                Hylasoft.Opc.Common.Quality quality = Hylasoft.Opc.Common.Quality.Bad;
 
                                 switch (stype)
                                 {
@@ -437,6 +492,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             bool bval = task.Result.Value;
                                             sval = bval.ToString().ToLower();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "float":
@@ -447,6 +503,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "double":
@@ -456,6 +513,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "system.decimal":
@@ -464,6 +522,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             Decimal dval = task.Result.Value;
                                             sval = dval.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "byte":
@@ -473,6 +532,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "sbyte":
@@ -482,6 +542,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "int16":
@@ -491,6 +552,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "uint16":
@@ -500,6 +562,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "integer":
@@ -510,6 +573,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "uint32":
@@ -519,6 +583,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "int64":
@@ -528,6 +593,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "uint64":
@@ -537,6 +603,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "time":
@@ -549,6 +616,7 @@ namespace OSHMI_OPC_Client
                                             DateTime dt = task.Result.Value;
                                             val = dt.Ticks;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     default:
@@ -559,7 +627,11 @@ namespace OSHMI_OPC_Client
 
                                 if (!fail)
                                 {
-                                    SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                    SendUdp(Encoding.ASCII.GetBytes(
+                                        "[{\"tag\":\"" + tag +
+                                        "\",\"value\":" + sval +
+                                        ",\"failed\":" + (quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                        "}]"));
                                     if (logread) Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                 }
                             }
@@ -666,7 +738,13 @@ namespace OSHMI_OPC_Client
                                         {
                                             bool bval = readEvent.Value;
                                             string sval = bval.ToString().ToLower();
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + sval +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                ",\"timestamp\": " + (Int32)(readEvent.SourceTimestamp.Subtract(new DateTime(1970, 1, 1))).TotalSeconds +
+                                                ",\"ms\":" + readEvent.SourceTimestamp.Millisecond +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval );
                                         });
                                     }
@@ -676,7 +754,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Single>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value.ToString("G",CultureInfo.CreateSpecificCulture("en-US")) + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")));
                                         });
                                     }
@@ -687,7 +769,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<double>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")) +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value.ToString("G", CultureInfo.CreateSpecificCulture("en-US")));
                                         });
                                     }
@@ -698,7 +784,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Byte>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -709,7 +799,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int16>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -722,7 +816,11 @@ namespace OSHMI_OPC_Client
                                     {
                                         client.Monitor<Int32>(entry.opc_path, (readEvent, unsubscribe) =>
                                         {
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + readEvent.Value + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + tag +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + readEvent.Value);
                                         });
                                     }
@@ -736,7 +834,11 @@ namespace OSHMI_OPC_Client
                                         {
                                             DateTime dt = readEvent.Value;
                                             string sval = dt.Ticks.ToString();
-                                            SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                            SendUdp(Encoding.ASCII.GetBytes(
+                                                "[{\"tag\":\"" + sval +
+                                                "\",\"value\":" + readEvent.Value +
+                                                ",\"failed\":" + (readEvent.Quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                                "}]"));
                                             if (logevent) Console.WriteLine("EVENT " + URI + " " + entry.opc_path + " " + tag + " " + sval);
                                         });
                                     }
@@ -764,6 +866,7 @@ namespace OSHMI_OPC_Client
                                 double val = 0;                                
                                 string sval = "";
                                 bool fail = false;
+                                Hylasoft.Opc.Common.Quality quality = Hylasoft.Opc.Common.Quality.Bad;
 
                                 switch (stype)
                                 {
@@ -775,6 +878,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             bool bval = task.Result.Value;
                                             sval = bval.ToString().ToLower();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "vt_r4":
@@ -784,6 +888,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "vt_r8":
@@ -794,6 +899,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "vt_i1":
@@ -804,6 +910,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "vt_i2":
@@ -814,6 +921,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "state":
@@ -826,6 +934,7 @@ namespace OSHMI_OPC_Client
                                             task.Wait();
                                             val = task.Result.Value;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     case "vt_date":
@@ -838,6 +947,7 @@ namespace OSHMI_OPC_Client
                                             DateTime dt = task.Result.Value;
                                             val = dt.Ticks;
                                             sval = val.ToString();
+                                            quality = task.Result.Quality;
                                         }
                                         break;
                                     default:
@@ -848,7 +958,11 @@ namespace OSHMI_OPC_Client
 
                                 if (!fail)
                                 {
-                                    SendUdp(Encoding.ASCII.GetBytes("{\"" + tag + "\" : " + sval + "}"));
+                                    SendUdp(Encoding.ASCII.GetBytes(
+                                        "[{\"tag\":\"" + tag +
+                                        "\",\"value\":" + sval +
+                                        ",\"failed\":" + (quality != Hylasoft.Opc.Common.Quality.Good ? "true" : "false") +
+                                        "}]"));
                                     if (logread) Console.WriteLine("READ  " + URI + " " + entry.opc_path + " " + tag  + " " + sval);
                                 }
                             }
